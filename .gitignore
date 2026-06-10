@@ -1,0 +1,44 @@
+node_modules
+dist
+dist-electron
+build
+.vite
+coverage
+*.log
+.DS_Store
+apps/desktop/.db
+apps/desktop/out
+apps/desktop/release
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+!.env.example
+
+# Editors and OS files
+.idea
+.vscode
+Thumbs.db
+
+# Python and local environments
+venv
+.venv
+__pycache__
+*.pyc
+
+# Secrets and credentials
+*.pem
+*.key
+id_rsa
+id_ed25519
+credentials.json
+secrets.json
+service-account*.json
+
+# Demo/runtime data that should not be published as portfolio code
+demo-workspace/
+
+# Local portfolio planning notes
+PORTFOLIO_AUDIT.md

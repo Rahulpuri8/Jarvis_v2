@@ -1,0 +1,19 @@
+{
+  "name": "buildos-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BuildOS AI desktop workspace",
+  "workspaces": [
+    "apps/*",
+    "apps/desktop/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @buildos/desktop",
+    "build": "npm run build --workspace @buildos/desktop",
+    "test": "npm run test --workspace @buildos/desktop"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
