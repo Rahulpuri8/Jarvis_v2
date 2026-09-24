@@ -5,7 +5,7 @@ import { WorkspacePage } from './pages/WorkspacePage';
 import { useBuildOS } from './hooks/useBuildOS';
 
 const App = () => {
-  const { state, createProject, selectProject, selectFolder, openFile, sendMessage, generateStarterFiles, approveAction, rejectAction, proposeCommand, saveSettings } = useBuildOS();
+  const { state, activeTaskLabel, createProject, selectProject, selectFolder, openFile, sendMessage, generateStarterFiles, approveAction, rejectAction, proposeCommand, saveSettings } = useBuildOS();
   const [route, setRoute] = useState<'home' | 'workspace' | 'settings'>('home');
 
   if (route === 'settings') {
@@ -48,6 +48,8 @@ const App = () => {
       pendingActions={state.pendingActions}
       commandRuns={state.commandRuns}
       logs={state.logs}
+      loading={state.loading}
+      activeTaskLabel={activeTaskLabel}
       onSelectFolder={selectFolder}
       onOpenFile={openFile}
       onSendMessage={sendMessage}

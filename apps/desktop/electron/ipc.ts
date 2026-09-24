@@ -47,8 +47,8 @@ const buildRoadmapMarkdown = (tasksMarkdownSource: Array<{ title: string; team: 
 
 ## Team Sequencing
 ${tasksMarkdownSource
-  .map((task) => `- ${task.team}: ${task.title} (${task.priority}) deps ${task.dependenciesJson}`)
-  .join('\n')}`;
+    .map((task) => `- ${task.team}: ${task.title} (${task.priority}) deps ${task.dependenciesJson}`)
+    .join('\n')}`;
 
 const buildApiPlanMarkdown = (): string => `# API and IPC Plan
 
@@ -159,7 +159,7 @@ export const resolveToolFromIntent = (message: string): ToolRequest | null => {
     const editor = isAntigravity ? 'antigravity' : 'vscode';
     let targetPath = 'd:\\Practice Projects\\Jarvis_V1';
     const pathMatch = message.match(/([a-zA-Z]:\\[^"'\n\r]+?)(?:\s+(?:into|in|with|using)\s+(?:antigravity|vscode|vs\s*code)|\s*$)/i) ||
-                    message.match(/([a-zA-Z]:\\[^\s"']+|[\.\w\\/-]+\.[a-zA-Z0-9]+)/);
+      message.match(/([a-zA-Z]:\\[^\s"']+|[\.\w\\/-]+\.[a-zA-Z0-9]+)/);
     if (pathMatch && pathMatch[1] && !pathMatch[1].toLowerCase().includes('antigravity') && !pathMatch[1].toLowerCase().includes('vscode')) {
       targetPath = pathMatch[1].trim();
     }
@@ -319,7 +319,7 @@ export const resolveToolFromIntent = (message: string): ToolRequest | null => {
   ) {
     let dir = 'd:\\Practice Projects\\Jarvis_V1';
     const inMatch = message.match(/(?:in|inside|under)\s+(?:dir|directory|folder)?\s*([a-zA-Z]:\\[^"'\n\r]+?)(?:\s+(?:for|to|with)\b|\s*$)/i) ||
-                    message.match(/(?:in|inside|under)\s+(?:dir|directory|folder)?\s*([a-zA-Z]:\\[^\s]+|[\.\w\\/-]+)/i);
+      message.match(/(?:in|inside|under)\s+(?:dir|directory|folder)?\s*([a-zA-Z]:\\[^\s]+|[\.\w\\/-]+)/i);
     if (inMatch && inMatch[1] && inMatch[1].trim() !== 'that' && inMatch[1].trim() !== 'this') {
       dir = inMatch[1].trim();
     }
@@ -704,8 +704,8 @@ export const resolveToolFromIntent = (message: string): ToolRequest | null => {
       const category = key.toLowerCase().includes('manager') || key.toLowerCase().includes('lead') || key.toLowerCase().includes('contact')
         ? 'contact'
         : key.toLowerCase().includes('prefer') || key.toLowerCase().includes('theme') || key.toLowerCase().includes('editor') || key.toLowerCase().includes('favorite')
-        ? 'preference'
-        : 'fact';
+          ? 'preference'
+          : 'fact';
       return {
         tool: 'memory.store_fact',
         arguments: { key, value: val, category },
@@ -1168,7 +1168,7 @@ export const registerIpcHandlers = ({ db, appDataPath, provider, pythonRuntimeSe
               drives: d.drives || [],
             };
           }
-        } catch {}
+        } catch { }
       }
 
       const os = await import('node:os');

@@ -21,6 +21,8 @@ interface ArcHudScreenProps {
   pendingActions: PendingActionRecord[];
   commandRuns: CommandRunRecord[];
   specs: SystemSpecs | null;
+  loading?: boolean;
+  activeTaskLabel?: string | null;
   onSendMessage: (content: string) => Promise<void>;
   onApproveAction: (actionId: string) => Promise<void>;
   onRejectAction: (actionId: string) => Promise<void>;
@@ -35,6 +37,8 @@ export const ArcHudScreen = ({
   pendingActions,
   commandRuns,
   specs,
+  loading,
+  activeTaskLabel,
   onSendMessage,
   onApproveAction,
   onRejectAction,
@@ -234,7 +238,6 @@ export const ArcHudScreen = ({
 
     try {
       await onSendMessage(cmd);
-      setSpeechFeedback(`Task instruction dispatched to neural core, Sir.`);
     } catch {
       setSpeechFeedback(`Apologies Sir, encountered an issue executing command.`);
     } finally {
@@ -815,6 +818,44 @@ export const ArcHudScreen = ({
                     </button>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* ── Processing / Thinking Indicator (visible during loading) ── */}
+            {loading && (
+              <div className="mt-3 p-3 border border-cyan-400/50 bg-cyan-950/40 rounded-sm shadow-[0_0_30px_rgba(0,212,255,0.15)] relative overflow-hidden">
+                <div className="flex items-center gap-3">
+                  <div className="relative flex items-center justify-center">
+                    <div className="h-6 w-6 rounded-full border-2 border-cyan-400/60 animate-spin" style={{ animationDuration: '1.2s', borderTopColor: 'transparent' }} />
+                    <div className="absolute h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="font-hud text-[11px] text-cyan-200 uppercase tracking-wider animate-pulse">
+                      Neural Core Processing
+                    </span>
+                    {activeTaskLabel && (
+                      <div className="font-mono-hud text-[10px] text-cyan-400/70 mt-0.5">
+                        ◈ {activeTaskLabel}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Animated progress sweep */}
+                <div className="mt-2 h-[2px] w-full bg-slate-800/60 overflow-hidden rounded-full">
+                  <div
+                    className="h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent rounded-full"
+                    style={{
+                      width: '40%',
+                      animation: 'hudProgressSweep 1.5s ease-in-out infinite',
+                    }}
+                  />
+                </div>
+                <style>{`
+                  @keyframes hudProgressSweep {
+                    0% { transform: translateX(-150%); }
+                    100% { transform: translateX(350%); }
+                  }
+                `}</style>
               </div>
             )}
 

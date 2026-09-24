@@ -1,4 +1,5 @@
 import type { PythonRuntimeService } from './python-runtime.service';
+import { resourceMonitor } from './resource-monitor';
 import type {
   WorkflowPlan,
   WorkflowStep,
@@ -111,13 +112,8 @@ export class WorkflowEngineService {
       };
 
       try {
-        // Resource Guard: Check RAM load before executing workflow step
-        const os = await import('node:os');
-        const total = os.totalmem();
-        const free = os.freemem();
-        if ((total - free) / total > 0.85) {
-          await new Promise((resolve) => setTimeout(resolve, 1200));
-        }
+        // Resource Guard: centralized RAM monitor with hysteresis
+        await resourceMonitor.applyThrottle();
 
         const result: ToolResult = await this.pythonRuntimeService.executeTool(toolReq);
         const durationMs = Date.now() - startMs;

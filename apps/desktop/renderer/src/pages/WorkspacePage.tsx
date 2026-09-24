@@ -27,6 +27,8 @@ interface WorkspacePageProps {
   pendingActions: ActionProposal[];
   commandRuns: CommandRunRecord[];
   logs: string[];
+  loading?: boolean;
+  activeTaskLabel?: string | null;
   onSelectFolder: () => Promise<void>;
   onOpenFile: (path: string, explicitApproval?: boolean) => Promise<void>;
   onSendMessage: (content: string) => Promise<void>;
@@ -92,6 +94,8 @@ export const WorkspacePage = ({
   pendingActions,
   commandRuns,
   logs,
+  loading,
+  activeTaskLabel,
   onSelectFolder,
   onOpenFile,
   onSendMessage,
@@ -391,6 +395,8 @@ export const WorkspacePage = ({
             pendingActions={pendingActions}
             commandRuns={commandRuns}
             specs={specs}
+            loading={loading}
+            activeTaskLabel={activeTaskLabel}
             onSendMessage={onSendMessage}
             onApproveAction={onApproveAction}
             onRejectAction={onRejectAction}
@@ -410,6 +416,8 @@ export const WorkspacePage = ({
                 pendingActions={pendingActions}
                 onApproveAction={onApproveAction}
                 onRejectAction={onRejectAction}
+                loading={loading}
+                activeTaskLabel={activeTaskLabel}
               />
             </div>
 
@@ -441,7 +449,7 @@ export const WorkspacePage = ({
               />
             </div>
             <div className="min-h-0 h-full">
-              <ChatPanel messages={messages} onSend={onSendMessage} />
+              <ChatPanel messages={messages} onSend={onSendMessage} loading={loading} activeTaskLabel={activeTaskLabel} />
             </div>
             <div className="flex flex-col gap-3 min-h-0 h-full">
               <div className="flex-1 min-h-0">

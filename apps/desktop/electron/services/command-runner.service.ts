@@ -3,6 +3,7 @@ import type Database from 'better-sqlite3';
 import { promisify } from 'node:util';
 import type { CommandRunRecord } from '../../../../packages/shared/types';
 import { SecurityService } from './security.service';
+import { resourceMonitor } from './resource-monitor';
 
 const execAsync = promisify(exec);
 
@@ -32,14 +33,8 @@ export class CommandRunnerService {
     }
 
     try {
-      // Resource Guard: Check RAM load before running commands
-      const os = await import('node:os');
-      const total = os.totalmem();
-      const free = os.freemem();
-      if ((total - free) / total > 0.85) {
-        // High RAM pressure: throttle execution pace
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      }
+      // Resource Guard: centralized RAM monitor with hysteresis
+      await resourceMonitor.applyThrottle();
 
       const { stdout, stderr } = await execAsync(command, { cwd, windowsHide: true });
       const output = [stdout, stderr].filter(Boolean).join('\n').trim();
