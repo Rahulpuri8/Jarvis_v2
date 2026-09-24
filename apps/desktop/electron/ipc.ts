@@ -1362,7 +1362,7 @@ export const registerIpcHandlers = ({ db, appDataPath, provider, pythonRuntimeSe
               },
             );
             outputs.push({
-              agentName: 'Security Gate',
+              agentName: 'Security Agent',
               summary: 'Awaiting confirmation',
               data: `### ⚠️ Authorization Required\n\nSir, are you sure you want to execute \`${toolReq.tool}\`? Orchestrator state set to **AWAITING_CONFIRMATION**. Please confirm in the Security Gate to proceed.` as any,
             });

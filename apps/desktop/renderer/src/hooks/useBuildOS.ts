@@ -24,7 +24,7 @@ const JARVIS_TOOLS = [
     type: 'function',
     function: {
       name: 'system_get_telemetry',
-      description: 'Get real-time CPU, RAM, GPU, thermals, and load metrics of the host PC. Use ONLY when the user asks specifically about their computer or PC hardware load, utilization, or status.',
+      description: 'Get real-time CPU, RAM/memory usage, GPU, thermals, and load metrics of the host PC. Call this tool when the user asks about RAM usage, CPU load, hardware telemetry, or computer status.',
       parameters: {
         type: 'object',
         properties: {},
@@ -85,11 +85,11 @@ const JARVIS_TOOLS = [
     type: 'function',
     function: {
       name: 'desktop_open_app',
-      description: 'Launch or open a desktop application (e.g. Chrome, Notepad, Spotify, Calculator).',
+      description: 'Launch or open a desktop application or Windows utility (e.g. Calculator, Notepad, File Explorer, Windows Settings, Web Browser / Chrome, Spotify).',
       parameters: {
         type: 'object',
         properties: {
-          app_name: { type: 'string', description: 'Name of the desktop application to launch' },
+          app_name: { type: 'string', description: 'Name or binary of the desktop application to launch (e.g. calc.exe, notepad.exe, explorer.exe, ms-settings:, chrome.exe)' },
         },
         required: ['app_name'],
       },
@@ -235,9 +235,19 @@ function extractToolCall(data: any): { name: string; arguments: Record<string, a
   return null;
 }
 
+const defaultBrowserProject: ProjectRecord = {
+  id: 'jarvis-general-session',
+  name: 'J.A.R.V.I.S Core',
+  description: 'General AI Assistant for all tasks',
+  status: 'ACTIVE',
+  folderPath: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
 const initialState: WorkspaceState = {
-  projects: [],
-  activeProject: null,
+  projects: [defaultBrowserProject],
+  activeProject: defaultBrowserProject,
   fileTree: [],
   selectedFilePath: null,
   selectedFileContent: '',
@@ -262,16 +272,6 @@ export const useBuildOS = () => {
       ...current,
       logs: [`${new Date().toLocaleTimeString()}: ${message}`, ...current.logs].slice(0, 150),
     }));
-
-  const defaultBrowserProject: ProjectRecord = {
-    id: 'jarvis-general-session',
-    name: 'J.A.R.V.I.S Core',
-    description: 'General AI Assistant for all tasks',
-    status: 'ACTIVE',
-    folderPath: null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
 
   const loadProjects = async () => {
     setState((current) => ({ ...current, loading: true, error: null }));
@@ -300,6 +300,10 @@ export const useBuildOS = () => {
     }
   };
 
+  useEffect(() => {
+    void loadProjects();
+  }, []);
+
   const createProject = async (payload: { name: string; description: string }) => {
     if (!hasDesktopApi()) {
       throw new Error('Create Workspace only works in the Electron desktop window, not the localhost browser preview.');
@@ -321,6 +325,7 @@ export const useBuildOS = () => {
 
   const selectProject = async (project: ProjectRecord) => {
     if (!hasDesktopApi()) {
+      setState((current) => ({ ...current, activeProject: project, loading: false }));
       return;
     }
 

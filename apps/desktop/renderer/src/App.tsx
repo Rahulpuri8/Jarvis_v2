@@ -12,7 +12,7 @@ const App = () => {
     return <SettingsPage settings={state.settings} onSave={saveSettings} onBack={() => setRoute(state.activeProject ? 'workspace' : 'home')} />;
   }
 
-  if (!state.activeProject || route === 'home') {
+  if (route === 'home') {
     return (
       <HomePage
         projects={state.projects}
