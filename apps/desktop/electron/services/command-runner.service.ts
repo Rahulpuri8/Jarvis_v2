@@ -18,12 +18,12 @@ export class CommandRunnerService {
         `SELECT id, action_id as actionId, project_id as projectId, command, cwd, output, exit_code as exitCode,
                 approval_status as approvalStatus, created_at as createdAt, risk_level as riskLevel
          FROM command_runs
-         WHERE action_id = ?`,
+         WHERE action_id = ? AND approval_status = 'PENDING'`,
       )
       .get(actionId) as CommandRunRecord | undefined;
 
     if (!pending) {
-      throw new Error('Command proposal not found.');
+      throw new Error('Pending command proposal not found or already processed.');
     }
 
     const { projectId, command, cwd } = pending;
@@ -32,6 +32,15 @@ export class CommandRunnerService {
     }
 
     try {
+      // Resource Guard: Check RAM load before running commands
+      const os = await import('node:os');
+      const total = os.totalmem();
+      const free = os.freemem();
+      if ((total - free) / total > 0.85) {
+        // High RAM pressure: throttle execution pace
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
       const { stdout, stderr } = await execAsync(command, { cwd, windowsHide: true });
       const output = [stdout, stderr].filter(Boolean).join('\n').trim();
       this.db

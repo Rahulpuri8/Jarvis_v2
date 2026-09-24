@@ -28,8 +28,16 @@ const api = {
   openInVSCode: (folderPath: string) => ipcRenderer.invoke('workspace:open-vscode', folderPath),
   openTerminal: (folderPath: string) => ipcRenderer.invoke('workspace:open-terminal', folderPath),
   openBrowserUrl: (url: string) => ipcRenderer.invoke('workspace:open-browser-url', url),
+  executeTool: (request: unknown) => ipcRenderer.invoke('tools:execute', request),
+  listTools: (category?: string) => ipcRenderer.invoke('tools:list', category),
+  getToolStatus: () => ipcRenderer.invoke('tools:status'),
+  getTokenAnalytics: () => ipcRenderer.invoke('settings:get-analytics'),
+  getSystemDiagnostics: () => ipcRenderer.invoke('system:diagnostics'),
+  listDesktopApps: () => ipcRenderer.invoke('system:list-apps'),
+  getSystemSpecs: () => ipcRenderer.invoke('system:specs'),
 };
 
 contextBridge.exposeInMainWorld('buildos', api);
+
 
 export type BuildOSDesktopApi = typeof api;

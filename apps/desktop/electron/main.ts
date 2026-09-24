@@ -3,8 +3,10 @@ import path from 'node:path';
 import { createProvider } from '../../../packages/ai/model-router';
 import { SQLiteDatabase } from './db/sqlite';
 import { registerIpcHandlers } from './ipc';
+import { PythonRuntimeService } from './services/python-runtime.service';
 
 const isDevelopment = !app.isPackaged;
+let pythonRuntimeService: PythonRuntimeService | null = null;
 
 const createMainWindow = async () => {
   const window = new BrowserWindow({
@@ -44,10 +46,18 @@ app.whenReady().then(async () => {
     }
   })();
 
+  // Initialize and auto-start Python Tool Runtime sidecar
+  const projectRoot = app.getAppPath();
+  pythonRuntimeService = new PythonRuntimeService(projectRoot);
+  pythonRuntimeService.start().catch((err) => {
+    console.error('Failed to auto-start Python runtime sidecar:', err);
+  });
+
   registerIpcHandlers({
     db,
     appDataPath: app.getAppPath(),
     provider,
+    pythonRuntimeService,
   });
 
   await createMainWindow();
@@ -59,8 +69,18 @@ app.whenReady().then(async () => {
   });
 });
 
+app.on('before-quit', () => {
+  if (pythonRuntimeService) {
+    pythonRuntimeService.stop();
+  }
+});
+
 app.on('window-all-closed', () => {
+  if (pythonRuntimeService) {
+    pythonRuntimeService.stop();
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
+

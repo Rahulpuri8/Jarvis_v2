@@ -17,6 +17,12 @@ const App = () => {
       <HomePage
         projects={state.projects}
         error={state.error}
+        onStartAssistant={async () => {
+          if (state.projects.length > 0 && !state.activeProject) {
+            await selectProject(state.projects[0]);
+          }
+          setRoute('workspace');
+        }}
         onCreateProject={async (payload) => {
           const project = await createProject(payload);
           await selectProject(project);
@@ -50,6 +56,7 @@ const App = () => {
       onRejectAction={rejectAction}
       onProposeCommand={proposeCommand}
       onOpenSettings={() => setRoute('settings')}
+      onReboot={() => setRoute('home')}
     />
   );
 };

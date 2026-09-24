@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { SettingsService } from '../electron/services/settings.service';
+import { SettingsService, decryptSecret, encryptSecret } from '../electron/services/settings.service';
 
 const settingsSchema = `
 CREATE TABLE app_settings (
@@ -44,5 +44,22 @@ describe('SettingsService', () => {
     expect(saved.selectedProvider).toBe('ollama');
     expect(saved.allowProtectedReadsWithApproval).toBe(false);
     expect(service.getSettings().geminiApiKey).toBe('gem-key');
+
+    // Verify stored column value in DB is actually encrypted
+    const row = db.prepare('SELECT gemini_api_key FROM app_settings WHERE id = ?').get('singleton') as { gemini_api_key: string };
+    expect(row.gemini_api_key).not.toBe('gem-key');
+    expect(row.gemini_api_key.startsWith('enc:v1:')).toBe(true);
+  });
+
+  it('encrypts and decrypts secrets correctly', () => {
+    const plain = 'super-secret-api-key-12345';
+    const encrypted = encryptSecret(plain);
+    expect(encrypted).not.toBe(plain);
+    expect(decryptSecret(encrypted)).toBe(plain);
+  });
+
+  it('handles legacy unencrypted keys gracefully', () => {
+    const legacy = 'legacy-plain-key';
+    expect(decryptSecret(legacy)).toBe('legacy-plain-key');
   });
 });

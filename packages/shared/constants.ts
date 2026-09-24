@@ -55,7 +55,7 @@ export const DEFAULT_SETTINGS = {
   selectedModel: 'gemini-1.5-pro',
   geminiModel: 'gemini-1.5-pro',
   groqModel: 'llama-3.1-70b-versatile',
-  ollamaModel: 'qwen2.5-coder:7b',
+  ollamaModel: 'qwen2.5:3b',
   ollamaBaseUrl: 'http://localhost:11434',
   requireCommandApproval: true,
   requireFileApproval: true,

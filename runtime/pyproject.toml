@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jarvis-runtime"
+version = "0.1.0"
+description = "JARVIS Python Tool Execution Runtime & Sidecar"
+authors = [{ name = "JARVIS Team" }]
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "websockets>=12.0",
+    "pydantic>=2.6.0",
+    "psutil>=5.9.8",
+    "pyautogui>=0.9.54",
+    "pillow>=10.2.0",
+    "pyperclip>=1.8.2",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["..", "."]
+asyncio_mode = "strict"
+filterwarnings = [
+    "ignore::RuntimeWarning",
+    "ignore::DeprecationWarning",
+]
+
+
+

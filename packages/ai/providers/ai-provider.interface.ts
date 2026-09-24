@@ -10,4 +10,5 @@ export interface AIProvider {
   name: string;
   generateText(input: GenerateTextInput): Promise<string>;
   generateStructuredJson<T>(input: GenerateTextInput, schema: GenerateStructuredSchema): Promise<T>;
+  generateStream?(input: GenerateTextInput, onChunk: (chunk: string) => void): Promise<string>;
 }

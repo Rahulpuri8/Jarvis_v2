@@ -41,6 +41,18 @@ export const taskSchema: GenerateStructuredSchema = {
   },
 };
 
+export const workflowPlanSchema: GenerateStructuredSchema = {
+  name: 'WorkflowPlan',
+  description: 'Decomposes a multi-step user goal into an ordered sequence of executable tool steps.',
+  shape: {
+    goal: 'string',
+    steps: 'Array<{ id: string; tool: string; description: string; arguments: Record<string, unknown>; outputKey?: string }>',
+    estimatedDurationSeconds: 'number',
+    requiresApproval: 'boolean',
+    explanation: 'string',
+  },
+};
+
 export const isCommandType = (value: string): value is CommandType =>
   [
     'NEW_PROJECT_BUILD',
@@ -52,8 +64,12 @@ export const isCommandType = (value: string): value is CommandType =>
     'PROPOSE_FILES',
     'EDIT_FILE',
     'RUN_COMMAND',
+    'TOOL_EXECUTION',
+    'WORKFLOW_EXECUTION',
     'GENERAL_QUESTION',
   ].includes(value);
 
 export const isRiskLevel = (value: string): value is RiskLevel =>
   ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(value);
+
+

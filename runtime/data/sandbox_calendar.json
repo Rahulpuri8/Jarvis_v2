@@ -1,0 +1,81 @@
+[
+  {
+    "id": "evt_001",
+    "title": "Daily Engineering Standup",
+    "start_time": "2026-09-05T09:30:00",
+    "end_time": "2026-09-05T10:00:00",
+    "location": "Google Meet: https://meet.google.com/abc-defg-hij",
+    "description": "Daily team sync: progress, blockers, release status.",
+    "attendees": [
+      "alex.dev@innovate.tech",
+      "sarah.lead@innovate.tech",
+      "me@jarvis.ai"
+    ],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_002",
+    "title": "Q3 Architecture & Workflow Planning RFC",
+    "start_time": "2026-09-05T15:00:00",
+    "end_time": "2026-09-05T16:00:00",
+    "location": "Conference Room A / Remote",
+    "description": "Reviewing local LLM routing and tool execution pipeline.",
+    "attendees": [
+      "sarah.lead@innovate.tech",
+      "me@jarvis.ai"
+    ],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_003",
+    "title": "Sprint 42 Demo & Retrospective",
+    "start_time": "2026-09-06T14:00:00",
+    "end_time": "2026-09-06T15:30:00",
+    "location": "Google Meet: https://meet.google.com/xyz-uvwx-rst",
+    "description": "Demonstrating Playwright browser tools and APScheduler background alerts.",
+    "attendees": [
+      "team@innovate.tech"
+    ],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_66eafba3",
+    "title": "Test Briefing Meeting",
+    "start_time": "2026-09-23T10:00:00",
+    "end_time": "2026-09-23T11:00:00",
+    "location": "",
+    "description": "",
+    "attendees": [],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_63adda75",
+    "title": "Test Briefing Meeting",
+    "start_time": "2026-09-23T10:00:00",
+    "end_time": "2026-09-23T11:00:00",
+    "location": "",
+    "description": "",
+    "attendees": [],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_119be829",
+    "title": "Test Briefing Meeting",
+    "start_time": "2026-09-23T10:00:00",
+    "end_time": "2026-09-23T11:00:00",
+    "location": "",
+    "description": "",
+    "attendees": [],
+    "status": "confirmed"
+  },
+  {
+    "id": "evt_609d2f0a",
+    "title": "Test Briefing Meeting",
+    "start_time": "2026-09-23T10:00:00",
+    "end_time": "2026-09-23T11:00:00",
+    "location": "",
+    "description": "",
+    "attendees": [],
+    "status": "confirmed"
+  }
+]

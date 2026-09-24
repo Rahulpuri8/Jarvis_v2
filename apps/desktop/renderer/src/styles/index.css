@@ -1,32 +1,203 @@
 @import "tailwindcss";
 
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+
 :root {
   color-scheme: dark;
-  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --jarvis-blue: #00d4ff;
+  --jarvis-cyan: #22d3ee;
+  --jarvis-gold: #f5a623;
+  --jarvis-dim: #0a1628;
+  --jarvis-deep: #020a18;
+  --hud-border: rgba(0, 212, 255, 0.25);
+  --hud-glow: rgba(0, 212, 255, 0.08);
+  --scanline-speed: 8s;
 }
 
-html,
-body,
-#root {
+html, body {
   margin: 0;
   min-height: 100%;
-  height: 100%;
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 body {
-  background: #020617;
+  background: var(--jarvis-deep);
 }
 
-* {
-  box-sizing: border-box;
+* { box-sizing: border-box; }
+button, input, textarea, select { font: inherit; }
+.prose code { white-space: pre-wrap; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(2, 10, 24, 0.7); }
+::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 212, 255, 0.5); }
+
+/* ── JARVIS Scanline overlay ── */
+.jarvis-scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 212, 255, 0.015) 2px,
+    rgba(0, 212, 255, 0.015) 4px
+  );
 }
 
-button,
-input,
-textarea {
-  font: inherit;
+/* ── HUD Panel ── */
+.hud-panel {
+  position: relative;
+  background: linear-gradient(135deg, rgba(2,10,24,0.92), rgba(10,22,40,0.88));
+  border: 1px solid var(--hud-border);
+  border-radius: 4px;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 0 30px rgba(0,212,255,0.06),
+    inset 0 1px 0 rgba(0,212,255,0.08);
+  overflow: hidden;
 }
 
-.prose code {
-  white-space: pre-wrap;
+.hud-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--jarvis-blue), transparent);
+  opacity: 0.5;
+}
+
+/* Corner brackets */
+.hud-corner { position: relative; }
+.hud-corner::before, .hud-corner::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  border-color: var(--jarvis-blue);
+  border-style: solid;
+  opacity: 0.5;
+}
+.hud-corner::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+.hud-corner::after { top: 0; right: 0; border-width: 1px 1px 0 0; }
+
+/* ── Arc Reactor ── */
+@keyframes arc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes arc-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+@keyframes hud-sweep {
+  0% { transform: translateY(-100%); opacity: 0; }
+  10% { opacity: 0.06; }
+  90% { opacity: 0.06; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(0,212,255,0.15), 0 0 20px rgba(0,212,255,0.05); }
+  50% { box-shadow: 0 0 14px rgba(0,212,255,0.3), 0 0 40px rgba(0,212,255,0.1); }
+}
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.7; }
+  94% { opacity: 1; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes boot-sequence {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes data-stream {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes arc-spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+.arc-ring-reverse {
+  animation: arc-spin-reverse 25s linear infinite;
+}
+@keyframes wave-bar {
+  0%, 100% { height: 4px; opacity: 0.4; }
+  50% { height: 28px; opacity: 1; }
+}
+.wave-bar-pulse {
+  animation: wave-bar 1.2s ease-in-out infinite;
+}
+.arc-reactor {
+  animation: arc-pulse 3s ease-in-out infinite;
+}
+.arc-ring {
+  animation: arc-spin 20s linear infinite;
+}
+.hud-glow-pulse {
+  animation: glow-pulse 4s ease-in-out infinite;
+}
+.hud-text-flicker {
+  animation: text-flicker 6s infinite;
+}
+.hud-boot {
+  animation: boot-sequence 0.6s ease-out both;
+}
+.hud-slide-in {
+  animation: slide-in-right 0.4s ease-out both;
+}
+
+/* ── Status indicators ── */
+.status-online {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34,197,94,0.6);
+  animation: arc-pulse 2s ease-in-out infinite;
+}
+.status-offline {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,0.6);
+}
+
+/* ── Fonts ── */
+.font-hud { font-family: 'Orbitron', monospace; }
+.font-mono-hud { font-family: 'Share Tech Mono', monospace; }
+.font-body { font-family: 'Rajdhani', sans-serif; }
+
+/* ── Glowing text ── */
+.text-glow {
+  text-shadow: 0 0 10px rgba(0,212,255,0.5), 0 0 30px rgba(0,212,255,0.2);
+}
+.text-glow-gold {
+  text-shadow: 0 0 10px rgba(245,166,35,0.5), 0 0 30px rgba(245,166,35,0.2);
+}
+
+/* ── Message bubbles ── */
+.jarvis-msg {
+  border-left: 2px solid var(--jarvis-blue);
+  background: linear-gradient(90deg, rgba(0,212,255,0.04), transparent);
+}
+.user-msg {
+  border-right: 2px solid var(--jarvis-gold);
+  background: linear-gradient(270deg, rgba(245,166,35,0.04), transparent);
 }

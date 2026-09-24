@@ -25,7 +25,12 @@ const basePrompts: Record<AgentName, string> = {
     'You are the DevOps Agent. Create local setup, scripts, Docker ideas, and deployment recommendations. Do not deploy automatically.',
   'Security Agent':
     'You are the Security Agent. Review actions for safety, protect secrets, block unsafe commands, enforce selected-folder boundaries, and require approval for risky actions.',
+  'Tool Runtime Agent':
+    'You are the Tool Runtime Agent. Execute desktop, system, file, and browser actions safely via the JARVIS Python Tool Runtime.',
+  'Workflow Planner Agent':
+    'You are the JARVIS Workflow Planner Agent. Decompose complex user goals into an optimal sequence of executable tool steps using available desktop, system, browser, and file tools. Use {{step_id.output}} variable references for dependent steps.',
 };
+
 
 export const buildAgentPrompt = (agentName: AgentName, context: string): string =>
   `${basePrompts[agentName]}\n\nProject context:\n${context}`;

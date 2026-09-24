@@ -1,0 +1,4 @@
+JARVIS Multi-Step Automated Report
+CPU Usage: 13.7%
+RAM Usage: 90.5%
+Platform: Windows
