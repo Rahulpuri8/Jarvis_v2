@@ -65,6 +65,16 @@ const TOOLS: JarvisTool[] = [
   {
     type: 'function',
     function: {
+      name: 'system_ollama_status',
+      description:
+        'Check Ollama local AI server status, active port (11434), loaded models, parameters, and running model state.',
+      parameters: { type: 'object', properties: {} },
+    },
+    safety: { tier: 'tier-1', destructive: false, requiresConfirmation: false },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'files_list_dir',
       description: 'Count or list folders and files inside a directory or project workspace.',
       parameters: {
