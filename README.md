@@ -1,6 +1,8 @@
-# BuildOS AI
+# BuildOS AI (J.A.R.V.I.S)
 
 Local-first AI desktop workspace for project planning, PRDs, architecture, task breakdowns, and approval-gated file or command actions.
+
+> 📖 **Developer Guide & Project Overview**: For complete architectural details, implemented features, safety tiers, and developer onboarding instructions, see **[PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md)**.
 
 ## Problem
 
