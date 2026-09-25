@@ -99,7 +99,29 @@ export class BrowserAgentService {
         const definitions = await this.getTools();
         const response = await this.chat(session.messages, definitions);
         const message = response.message;
-        const calls = message?.tool_calls || [];
+        let calls = message?.tool_calls || [];
+
+        // Fallback: if model emitted JSON tool call in content instead of tool_calls array
+        if (!calls.length && message?.content) {
+          const raw = message.content.trim();
+          const jsonMatch =
+            raw.match(/\{[\s\S]*?"name"\s*:\s*"([a-zA-Z0-9_\.]+)"[\s\S]*?"arguments"\s*:\s*(\{[\s\S]*?\})[\s\S]*?\}/) ||
+            raw.match(/\{[\s\S]*?"arguments"\s*:\s*(\{[\s\S]*?\})[\s\S]*?"name"\s*:\s*"([a-zA-Z0-9_\.]+)"[\s\S]*?\}/);
+          if (jsonMatch) {
+            try {
+              const parsed = JSON.parse(jsonMatch[0]);
+              if (parsed.name) {
+                calls = [{
+                  function: {
+                    name: parsed.name,
+                    arguments: parsed.arguments || {},
+                  }
+                }];
+              }
+            } catch {}
+          }
+        }
+
         if (!calls.length) {
           const reply = message?.content?.trim();
           return reply
