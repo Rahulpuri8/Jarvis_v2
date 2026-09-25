@@ -195,6 +195,33 @@ def browser_get_content(extract_mode: str = "text", max_chars: int = 8000) -> Di
         }
 
 
+def browser_inspect() -> Dict[str, Any]:
+    """Describe visible interactive elements so the agent can choose grounded selectors."""
+    page = _browser_mgr.get_page(create_if_none=False)
+    if page is None:
+        raise RuntimeError("No active browser page open. Call browser.open first.")
+
+    elements = page.evaluate("""() => {
+      const controls = [...document.querySelectorAll('a, button, input, textarea, select, [role="button"]')];
+      return controls.filter(el => {
+        const r = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        return r.width > 0 && r.height > 0 && style.visibility !== 'hidden';
+      }).slice(0, 60).map(el => {
+        const tag = el.tagName.toLowerCase();
+        const text = (el.innerText || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '').trim().slice(0, 100);
+        let selector;
+        if (el.id) selector = '#' + CSS.escape(el.id);
+        else if (el.getAttribute('name')) selector = tag + '[name=' + JSON.stringify(el.getAttribute('name')) + ']';
+        else if (el.getAttribute('placeholder')) selector = tag + '[placeholder=' + JSON.stringify(el.getAttribute('placeholder')) + ']';
+        else if (text) selector = tag + ':has-text(' + JSON.stringify(text) + ')';
+        else selector = tag;
+        return { tag, text, selector, href: tag === 'a' ? el.href : undefined, type: el.getAttribute('type') || undefined };
+      });
+    }""")
+    return {"url": page.url, "title": page.title(), "elements": elements}
+
+
 def browser_click(selector: str) -> Dict[str, Any]:
     """Click an element on the active page by CSS selector, text, or XPath."""
     page = _browser_mgr.get_page(create_if_none=False)
@@ -202,7 +229,10 @@ def browser_click(selector: str) -> Dict[str, Any]:
         raise RuntimeError("No active browser page open. Call browser.open first.")
 
     page.click(selector, timeout=10000)
-    page.wait_for_load_state("domcontentloaded", timeout=5000)
+    try:
+        page.wait_for_load_state("domcontentloaded", timeout=5000)
+    except Exception:
+        pass  # A click may update the page without navigation.
 
     return {
         "clicked": selector,
@@ -309,29 +339,35 @@ def browser_search(query: str, max_results: int = 5) -> Dict[str, Any]:
         try:
             encoded = urllib.parse.quote_plus(query)
             search_url = f"https://duckduckgo.com/?q={encoded}"
-            page = _browser_mgr.get_page(create_if_none=True, headless=True)
-            page.goto(search_url, wait_until="domcontentloaded", timeout=15000)
-
-            try:
-                page.wait_for_selector("article, [data-testid='result']", timeout=5000)
-            except Exception:
-                pass
-
-            elements = page.query_selector_all("article, [data-testid='result'], .result")
-            for el in elements:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as playwright:
+                browser = playwright.chromium.launch(headless=True)
                 try:
-                    link_tag = el.query_selector("a[data-testid='result-title-a'], h2 a, a.result__url")
-                    snippet_tag = el.query_selector("[data-result='snippet'], .result__snippet, [data-testid='result-snippet']")
-                    if link_tag:
-                        title = link_tag.inner_text().strip()
-                        url = link_tag.get_attribute("href") or ""
-                        snippet = snippet_tag.inner_text().strip() if snippet_tag else ""
-                        if title and url and url.startswith("http"):
-                            results.append({"title": title, "url": url, "snippet": snippet})
-                except Exception:
-                    continue
-                if len(results) >= max_results:
-                    break
+                    page = browser.new_page()
+                    page.goto(search_url, wait_until="domcontentloaded", timeout=15000)
+
+                    try:
+                        page.wait_for_selector("article, [data-testid='result']", timeout=5000)
+                    except Exception:
+                        pass
+
+                    elements = page.query_selector_all("article, [data-testid='result'], .result")
+                    for el in elements:
+                        try:
+                            link_tag = el.query_selector("a[data-testid='result-title-a'], h2 a, a.result__url")
+                            snippet_tag = el.query_selector("[data-result='snippet'], .result__snippet, [data-testid='result-snippet']")
+                            if link_tag:
+                                title = link_tag.inner_text().strip()
+                                url = link_tag.get_attribute("href") or ""
+                                snippet = snippet_tag.inner_text().strip() if snippet_tag else ""
+                                if title and url and url.startswith("http"):
+                                    results.append({"title": title, "url": url, "snippet": snippet})
+                        except Exception:
+                            continue
+                        if len(results) >= max_results:
+                            break
+                finally:
+                    browser.close()
         except Exception:
             pass
 
@@ -432,6 +468,18 @@ def register_browser_tools(registry: ToolRegistry) -> None:
             permissions=["browser:control"],
         ),
         browser_get_content,
+    )
+
+    registry.register(
+        ToolDefinition(
+            name="browser.inspect",
+            description="List visible links, buttons, and form fields with grounded selectors.",
+            category="browser",
+            arguments_schema={"type": "object", "properties": {}},
+            risk_level=ToolRiskLevel.READ_ONLY,
+            permissions=["browser:control"],
+        ),
+        browser_inspect,
     )
 
     registry.register(

@@ -35,6 +35,29 @@ The goal is to act like a practical AI tech lead for early project planning whil
 - Keep an action log of project activity
 - Configure provider keys and safety settings from the desktop app
 
+### Browser agent demo
+
+In the Electron desktop window, ask a browser-specific question such as
+“Open https://example.com in the browser and tell me what the page says.”
+The local `qwen2.5-coder:7b` model can search, open, inspect, read, and scroll pages
+through the Python Playwright runtime. After each tool result, an Electron main
+process coordinator asks the model what to do next, up to eight actions. Clicks
+and form typing pause in the existing Security Gate; approving resumes the
+stored action and the browser task. A rejection stops the task.
+
+The browser is a separate, visible Playwright session. Sign in manually if a
+site requires it. The session is currently ephemeral; it does not reuse your
+normal Chrome profile or survive an app restart. This is a bounded demo agent,
+not unattended cross-site automation. The localhost Python runtime still needs
+authentication and stronger server-side authorization before it can be treated
+as a secure boundary against other local processes. Browser-only tasks run in
+the Electron desktop window; the Vite browser preview retains its earlier chat
+path.
+
+Set up the Python dependencies in `runtime/requirements.txt`, install Playwright's
+Chromium browser with `python -m playwright install chromium`, and have Ollama
+running with `qwen2.5-coder:7b`. The Electron app starts the Python sidecar.
+
 ## Tech Stack
 
 - Electron

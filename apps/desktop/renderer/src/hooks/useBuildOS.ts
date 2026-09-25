@@ -5,6 +5,7 @@ import { speakJarvisVoice } from '../utils/speech';
 import { toolRegistry } from '../services/tool-registry';
 import { ConversationManager } from '../services/conversation-manager';
 import { ExecutionEngine, extractToolCall } from '../services/execution-engine';
+import type { BrowserAgentResult } from '../../../electron/services/browser-agent.service';
 
 // ── Singleton services (renderer-side) ─────────────────────────────────
 
@@ -15,6 +16,10 @@ const executionEngine = new ExecutionEngine();
 
 const hasDesktopApi = () =>
   typeof window !== 'undefined' && typeof window.buildos !== 'undefined';
+
+const isBrowserGoal = (content: string) =>
+  /\b(browser|website|webpage|web site|search the web|browse the web)\b/i.test(content) ||
+  /https?:\/\/\S+/i.test(content);
 
 function makeMsg(
   projectId: string,
@@ -96,6 +101,25 @@ export const useBuildOS = () => {
       ...c,
       logs: [`${new Date().toLocaleTimeString()}: ${message}`, ...c.logs].slice(0, 150),
     }));
+
+  const browserProposal = (result: BrowserAgentResult): ActionProposal[] => {
+    if (!result.approval) return [];
+    return [{
+      id: result.approval.id,
+      projectId: pid(),
+      actionType: 'COMMAND',
+      description: result.approval.description,
+      riskLevel: 'HIGH',
+      status: 'PENDING',
+      approvalRequired: true,
+      payload: {
+        command: '', cwd: '', output: '',
+        browserApprovalId: result.approval.id,
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }];
+  };
 
   // ── Project Management ────────────────────────────────────────────
 
@@ -411,6 +435,21 @@ export const useBuildOS = () => {
     addLog(`Transmitted instruction: "${content.slice(0, 30)}..."`);
 
     try {
+      if (hasDesktopApi() && isBrowserGoal(content)) {
+        const result = await window.buildos.startBrowserAgent(content);
+        setState((c) => ({
+          ...c,
+          messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply, 1)],
+          pendingActions: [...c.pendingActions, ...browserProposal(result)],
+          loading: false,
+        }));
+        setActiveTaskLabel(null);
+        activeAbortRef.current = null;
+        addLog(`Browser task ${result.status} after ${result.steps} action(s).`);
+        speakJarvisVoice(result.reply);
+        return;
+      }
+
       let reply = '';
       let promptTokens = 0;
       let compTokens = 0;
@@ -599,6 +638,18 @@ export const useBuildOS = () => {
 
   const approveAction = async (actionId: string) => {
     const action = state.pendingActions.find((item) => item.id === actionId);
+    const browserApprovalId = (action?.payload as any)?.browserApprovalId;
+    if (browserApprovalId && hasDesktopApi()) {
+      const result = await window.buildos.resolveBrowserApproval(browserApprovalId, true);
+      setState((c) => ({
+        ...c,
+        pendingActions: [...c.pendingActions.filter((a) => a.id !== actionId), ...browserProposal(result)],
+        messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply)],
+      }));
+      addLog(`Browser action approved; task ${result.status} after ${result.steps} action(s).`);
+      speakJarvisVoice(result.reply);
+      return;
+    }
     const pendingConf =
       pendingConfirmation?.id === actionId ? pendingConfirmation : null;
     const toolPayload = (action?.payload as any)?.tool;
@@ -659,6 +710,17 @@ export const useBuildOS = () => {
     }
 
     const action = state.pendingActions.find((item) => item.id === actionId);
+    if ((action?.payload as any)?.browserApprovalId && hasDesktopApi()) {
+      const result = await window.buildos.resolveBrowserApproval((action?.payload as any).browserApprovalId, false);
+      setState((c) => ({
+        ...c,
+        pendingActions: c.pendingActions.filter((a) => a.id !== actionId),
+        messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply)],
+      }));
+      addLog('Browser action rejected.');
+      speakJarvisVoice(result.reply);
+      return;
+    }
     const reply = 'Operation rejected, Sir. No changes have been made to your system.';
 
     setState((c) => ({

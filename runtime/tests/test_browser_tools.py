@@ -7,6 +7,7 @@ from runtime.tools.browser import (
     register_browser_tools,
     browser_search,
     browser_close,
+    browser_inspect,
 )
 
 
@@ -22,6 +23,7 @@ def test_browser_tools_registration():
         "browser.navigate",
         "browser.screenshot",
         "browser.get_content",
+        "browser.inspect",
         "browser.click",
         "browser.type",
         "browser.scroll",
@@ -43,20 +45,22 @@ def test_browser_close_safe():
 
 
 @patch("runtime.tools.browser._browser_mgr.get_page")
-def test_browser_search_mocked(mock_get_page):
-    mock_page = MagicMock()
-    mock_link = MagicMock()
-    mock_link.inner_text.return_value = "Python Programming"
-    mock_link.get_attribute.return_value = "https://python.org"
+def test_browser_inspect_returns_grounded_controls(mock_get_page):
+    page = MagicMock()
+    page.url = "https://example.com"
+    page.title.return_value = "Example"
+    page.evaluate.return_value = [{"tag": "a", "text": "Pricing", "selector": "a:has-text(\"Pricing\")"}]
+    mock_get_page.return_value = page
+    result = browser_inspect()
+    assert result["elements"][0]["text"] == "Pricing"
+    assert result["url"] == "https://example.com"
 
-    mock_snippet = MagicMock()
-    mock_snippet.inner_text.return_value = "Python is a programming language."
 
-    mock_element = MagicMock()
-    mock_element.query_selector.side_effect = lambda sel: mock_link if "title" in sel or "url" in sel else mock_snippet
-
-    mock_page.query_selector_all.return_value = [mock_element]
-    mock_get_page.return_value = mock_page
+@patch("urllib.request.urlopen")
+def test_browser_search_mocked(mock_urlopen):
+    response = MagicMock()
+    response.read.return_value = b'<table><tr><td><a class="result-link" href="https://python.org">Python Programming</a></td><td class="result-snippet">Python is a programming language.</td></tr></table>'
+    mock_urlopen.return_value.__enter__.return_value = response
 
     res = browser_search("python", max_results=3)
     assert res["query"] == "python"

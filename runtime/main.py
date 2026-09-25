@@ -67,10 +67,10 @@ async def list_tools(category: Optional[str] = Query(None, description="Optional
 
 
 @app.post("/execute", response_model=ToolResult)
-async def execute_tool(request: ToolRequest, bypass_risk_check: bool = False) -> ToolResult:
+async def execute_tool(request: ToolRequest) -> ToolResult:
     """Execute a tool via HTTP POST (fallback to WebSocket)."""
     logger.info(f"HTTP Execute tool request: {request.tool} (id: {request.request_id})")
-    result = await gateway.execute(request, bypass_risk_check=bypass_risk_check)
+    result = await gateway.execute(request)
     return result
 
 
@@ -90,7 +90,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 tool_name = data.get("tool")
                 arguments = data.get("arguments", {})
                 req_id = data.get("request_id")
-                bypass_risk = data.get("bypass_risk_check", False)
 
                 if not tool_name:
                     err_res = {
@@ -108,7 +107,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     req.request_id = req_id
 
                 logger.info(f"WS Execute: {req.tool} (id: {req.request_id})")
-                res = await gateway.execute(req, bypass_risk_check=bypass_risk)
+                res = await gateway.execute(req)
                 await websocket.send_text(res.model_dump_json())
 
             except json.JSONDecodeError:

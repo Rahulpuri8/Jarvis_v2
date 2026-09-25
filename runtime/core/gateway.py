@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 from .models import ToolAuditEntry, ToolDefinition, ToolRequest, ToolResult, ToolRiskLevel
 from .permissions import PermissionManager
@@ -20,8 +21,10 @@ class ToolGateway:
         self.registry = registry
         self.permission_manager = permission_manager or PermissionManager()
         self.audit_log: List[ToolAuditEntry] = []
+        # Playwright's sync API is thread-affine. Keep the browser session on one worker.
+        self.browser_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="jarvis-browser")
 
-    async def execute(self, request: ToolRequest, bypass_risk_check: bool = False) -> ToolResult:
+    async def execute(self, request: ToolRequest) -> ToolResult:
         """
         Execute a tool request through the validation and security pipeline.
         """
@@ -45,21 +48,20 @@ class ToolGateway:
         tool_def, handler = tool_entry
 
         # Permission & Risk check
-        if not bypass_risk_check:
-            allowed, reason = self.permission_manager.can_execute(tool_def)
-            if not allowed:
-                duration_ms = (time.perf_counter() - start_time) * 1000
-                status = "pending_approval" if "requires user approval" in reason else "rejected"
-                self._log_audit(request, tool_def.risk_level, status, duration_ms, error=reason)
-                return ToolResult(
-                    success=False,
-                    status=status,
-                    message=reason,
-                    error=reason,
-                    retryable=False,
-                    request_id=request.request_id,
-                    duration_ms=duration_ms,
-                )
+        allowed, reason = self.permission_manager.can_execute(tool_def)
+        if not allowed:
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            status = "pending_approval" if "requires user approval" in reason else "rejected"
+            self._log_audit(request, tool_def.risk_level, status, duration_ms, error=reason)
+            return ToolResult(
+                success=False,
+                status=status,
+                message=reason,
+                error=reason,
+                retryable=False,
+                request_id=request.request_id,
+                duration_ms=duration_ms,
+            )
 
         # Execution with timeout
         try:
@@ -86,7 +88,7 @@ class ToolGateway:
 
                 loop = asyncio.get_running_loop()
                 result_data = await asyncio.wait_for(
-                    loop.run_in_executor(None, sync_call),
+                    loop.run_in_executor(self.browser_executor if request.tool.startswith("browser.") else None, sync_call),
                     timeout=tool_def.timeout,
                 )
 

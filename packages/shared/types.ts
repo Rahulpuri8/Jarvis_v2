@@ -82,7 +82,6 @@ export interface ToolRequest {
   tool: string;
   arguments?: Record<string, unknown>;
   request_id?: string;
-  bypass_risk_check?: boolean;
 }
 
 export interface ToolResult<T = Record<string, unknown>> {

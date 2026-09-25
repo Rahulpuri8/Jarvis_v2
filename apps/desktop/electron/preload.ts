@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
+import type { BrowserAgentResult } from './services/browser-agent.service';
 
 const api = {
   listProjects: () => ipcRenderer.invoke('projects:list'),
@@ -29,6 +30,9 @@ const api = {
   openTerminal: (folderPath: string) => ipcRenderer.invoke('workspace:open-terminal', folderPath),
   openBrowserUrl: (url: string) => ipcRenderer.invoke('workspace:open-browser-url', url),
   executeTool: (request: unknown) => ipcRenderer.invoke('tools:execute', request),
+  startBrowserAgent: (goal: string): Promise<BrowserAgentResult> => ipcRenderer.invoke('browser-agent:start', goal),
+  resolveBrowserApproval: (approvalId: string, approved: boolean): Promise<BrowserAgentResult> =>
+    ipcRenderer.invoke('browser-agent:resolve', approvalId, approved),
   listTools: (category?: string) => ipcRenderer.invoke('tools:list', category),
   getToolStatus: () => ipcRenderer.invoke('tools:status'),
   getTokenAnalytics: () => ipcRenderer.invoke('settings:get-analytics'),

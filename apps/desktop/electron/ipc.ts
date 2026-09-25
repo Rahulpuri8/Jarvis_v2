@@ -19,6 +19,7 @@ import { SecurityService } from './services/security.service';
 import { SettingsService } from './services/settings.service';
 import { StarterFilesService } from './services/starter-files.service';
 import { PythonRuntimeService } from './services/python-runtime.service';
+import { BrowserAgentService } from './services/browser-agent.service';
 import { WorkflowEngineService } from './services/workflow-engine.service';
 import type { AgentOutput, ToolRequest, ToolResult, WorkflowPlan } from '../../../packages/shared/types';
 
@@ -948,6 +949,17 @@ export const resolveToolFromIntent = (message: string): ToolRequest | null => {
 
 
 export const registerIpcHandlers = ({ db, appDataPath, provider, pythonRuntimeService }: IpcDependencies): void => {
+  const browserAgent = pythonRuntimeService
+    ? new BrowserAgentService((request) => pythonRuntimeService.executeTool(request))
+    : null;
+  ipcMain.handle('browser-agent:start', async (_, goal: string) => {
+    if (!browserAgent) throw new Error('Python browser runtime is not initialized.');
+    return browserAgent.start(goal);
+  });
+  ipcMain.handle('browser-agent:resolve', async (_, approvalId: string, approved: boolean) => {
+    if (!browserAgent) throw new Error('Python browser runtime is not initialized.');
+    return browserAgent.resolveApproval(approvalId, approved);
+  });
   const securityService = new SecurityService();
   const fileSystemService = new FileSystemService(securityService);
   const projectService = new ProjectService(db, fileSystemService);
