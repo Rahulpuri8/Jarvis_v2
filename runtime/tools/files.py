@@ -10,11 +10,12 @@ def _sanitize_path(p: str) -> str:
     return os.path.abspath(os.path.expanduser(os.path.expandvars(p)))
 
 
-def file_search(directory: str, pattern: str, max_results: int = 50) -> Dict[str, Any]:
+def file_search(directory: Optional[str] = None, pattern: str = "*", max_results: int = 50, path: Optional[str] = None) -> Dict[str, Any]:
     """Search for files matching a glob pattern within a directory."""
-    clean_dir = _sanitize_path(directory)
+    target_dir = directory or path or "."
+    clean_dir = _sanitize_path(target_dir)
     if not os.path.exists(clean_dir):
-        raise FileNotFoundError(f"Directory '{directory}' does not exist.")
+        raise FileNotFoundError(f"Directory '{target_dir}' does not exist.")
 
     search_path = os.path.join(clean_dir, "**", pattern)
     matches = glob.glob(search_path, recursive=True)
@@ -63,12 +64,13 @@ def file_info(file_path: str) -> Dict[str, Any]:
     }
 
 
-def list_dir(directory: str) -> Dict[str, Any]:
+def list_dir(directory: Optional[str] = None, path: Optional[str] = None) -> Dict[str, Any]:
     """List direct children in a directory."""
-    clean_dir = _sanitize_path(directory)
+    target_dir = directory or path or "."
+    clean_dir = _sanitize_path(target_dir)
     p = Path(clean_dir)
     if not p.exists() or not p.is_dir():
-        raise NotADirectoryError(f"Directory '{directory}' does not exist.")
+        raise NotADirectoryError(f"Directory '{target_dir}' does not exist.")
 
     items = []
     for child in p.iterdir():

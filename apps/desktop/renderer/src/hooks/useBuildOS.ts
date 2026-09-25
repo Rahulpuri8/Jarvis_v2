@@ -6,6 +6,7 @@ import { toolRegistry } from '../services/tool-registry';
 import { ConversationManager } from '../services/conversation-manager';
 import { ExecutionEngine, extractToolCall } from '../services/execution-engine';
 import type { BrowserAgentResult } from '../../../electron/services/browser-agent.service';
+import type { DesktopAgentResult } from '../../../electron/services/desktop-agent.service';
 
 // ── Singleton services (renderer-side) ─────────────────────────────────
 
@@ -20,6 +21,9 @@ const hasDesktopApi = () =>
 const isBrowserGoal = (content: string) =>
   /\b(browser|website|webpage|web site|search the web|browse the web)\b/i.test(content) ||
   /https?:\/\/\S+/i.test(content);
+
+const isDesktopGoal = (content: string) =>
+  /\b(file|files|folder|directory|dir|read|write|delete|search|find|system|cpu|ram|memory|process|processes|drive|drives|disk|storage|app|apps|window|windows|launch|open|close|kill|terminate|git|commit|status|log)\b/i.test(content);
 
 function makeMsg(
   projectId: string,
@@ -115,6 +119,25 @@ export const useBuildOS = () => {
       payload: {
         command: '', cwd: '', output: '',
         browserApprovalId: result.approval.id,
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }];
+  };
+
+  const desktopProposal = (result: DesktopAgentResult): ActionProposal[] => {
+    if (!result.approval) return [];
+    return [{
+      id: result.approval.id,
+      projectId: pid(),
+      actionType: 'COMMAND',
+      description: result.approval.description,
+      riskLevel: 'HIGH',
+      status: 'PENDING',
+      approvalRequired: true,
+      payload: {
+        command: '', cwd: '', output: '',
+        desktopApprovalId: result.approval.id,
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -450,6 +473,21 @@ export const useBuildOS = () => {
         return;
       }
 
+      if (hasDesktopApi() && isDesktopGoal(content)) {
+        const result = await window.buildos.startDesktopAgent(content, state.activeProject?.folderPath);
+        setState((c) => ({
+          ...c,
+          messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply, 1)],
+          pendingActions: [...c.pendingActions, ...desktopProposal(result)],
+          loading: false,
+        }));
+        setActiveTaskLabel(null);
+        activeAbortRef.current = null;
+        addLog(`Desktop task ${result.status} after ${result.steps} action(s).`);
+        speakJarvisVoice(result.reply);
+        return;
+      }
+
       let reply = '';
       let promptTokens = 0;
       let compTokens = 0;
@@ -650,6 +688,19 @@ export const useBuildOS = () => {
       speakJarvisVoice(result.reply);
       return;
     }
+
+    const desktopApprovalId = (action?.payload as any)?.desktopApprovalId;
+    if (desktopApprovalId && hasDesktopApi()) {
+      const result = await window.buildos.resolveDesktopApproval(desktopApprovalId, true);
+      setState((c) => ({
+        ...c,
+        pendingActions: [...c.pendingActions.filter((a) => a.id !== actionId), ...desktopProposal(result)],
+        messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply)],
+      }));
+      addLog(`Desktop action approved; task ${result.status} after ${result.steps} action(s).`);
+      speakJarvisVoice(result.reply);
+      return;
+    }
     const pendingConf =
       pendingConfirmation?.id === actionId ? pendingConfirmation : null;
     const toolPayload = (action?.payload as any)?.tool;
@@ -718,6 +769,17 @@ export const useBuildOS = () => {
         messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply)],
       }));
       addLog('Browser action rejected.');
+      speakJarvisVoice(result.reply);
+      return;
+    }
+    if ((action?.payload as any)?.desktopApprovalId && hasDesktopApi()) {
+      const result = await window.buildos.resolveDesktopApproval((action?.payload as any).desktopApprovalId, false);
+      setState((c) => ({
+        ...c,
+        pendingActions: c.pendingActions.filter((a) => a.id !== actionId),
+        messages: [...c.messages, makeMsg(pid(), 'assistant', result.reply)],
+      }));
+      addLog('Desktop action rejected.');
       speakJarvisVoice(result.reply);
       return;
     }

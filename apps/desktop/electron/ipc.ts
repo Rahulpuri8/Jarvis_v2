@@ -20,6 +20,7 @@ import { SettingsService } from './services/settings.service';
 import { StarterFilesService } from './services/starter-files.service';
 import { PythonRuntimeService } from './services/python-runtime.service';
 import { BrowserAgentService } from './services/browser-agent.service';
+import { DesktopAgentService } from './services/desktop-agent.service';
 import { WorkflowEngineService } from './services/workflow-engine.service';
 import type { AgentOutput, ToolRequest, ToolResult, WorkflowPlan } from '../../../packages/shared/types';
 
@@ -959,6 +960,18 @@ export const registerIpcHandlers = ({ db, appDataPath, provider, pythonRuntimeSe
   ipcMain.handle('browser-agent:resolve', async (_, approvalId: string, approved: boolean) => {
     if (!browserAgent) throw new Error('Python browser runtime is not initialized.');
     return browserAgent.resolveApproval(approvalId, approved);
+  });
+
+  const desktopAgent = pythonRuntimeService
+    ? new DesktopAgentService((request) => pythonRuntimeService.executeTool(request))
+    : null;
+  ipcMain.handle('desktop-agent:start', async (_, goal: string, activeProjectPath?: string | null) => {
+    if (!desktopAgent) throw new Error('Python runtime is not initialized.');
+    return desktopAgent.start(goal, activeProjectPath);
+  });
+  ipcMain.handle('desktop-agent:resolve', async (_, approvalId: string, approved: boolean) => {
+    if (!desktopAgent) throw new Error('Python runtime is not initialized.');
+    return desktopAgent.resolveApproval(approvalId, approved);
   });
   const securityService = new SecurityService();
   const fileSystemService = new FileSystemService(securityService);
